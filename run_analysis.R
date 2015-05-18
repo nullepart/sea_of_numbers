@@ -38,7 +38,7 @@ var <- c(var1, as.character(var2[, 2]))
 rm(var1)
 
 names(df.total) <- var
-dt.total <- data.table(df.total, key = c("subject", "activity.n"))
+dt.total <- data.table(df.total, key = activity.n))
 
 rm(test.sub) ; rm(test.acti); rm(test.data) # clean up memory
 rm(df.test); rm(df.total); rm(df.train)
@@ -61,8 +61,12 @@ acti <- data.table(read.table(file = "./data/raw/activity_labels.txt",
 setnames(acti, c("V1", "V2"), c("activity.n", "activity"))
 setkey(acti, activity.n)
 
-dt <- dt[J(acti$activity.n)]
-
+dt <- dt[acti]
+n.col <- dim(dt)[2]
+setcolorder(dt, c("subject", "activity.n", 
+                  "activity", 
+                  names(dt)[4:n.col-1])) # To put activity at the
+                                         # beginning of the table
 
 
 # STEP 4. Appropriately labels the data set with descriptive variable names. 
