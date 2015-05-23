@@ -9,23 +9,23 @@ library(dplyr)
 ## Download the data, extract it
 
 if(!file.exists("./data/raw.zip")) {
-  dataURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+  dataURL <- "https:/d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
   download.file(dataURL, destfile = "./data/raw.zip", method = "curl")
 } 
 
 if(!file.exists("./data/UCI HAR Dataset/") && !file.exists("./data/raw/")) {
   unzip("./data/raw.zip", exdir = "./data")
-  file.rename(from = "./data//UCI HAR Dataset", to = "./data/raw")
+  file.rename(from = "./data/UCI HAR Dataset", to = "./data/raw")
 }
 
 ## load data
-train.sub <- read.table("./data//raw/train//subject_train.txt", header = F)
+train.sub <- read.table("./data/raw/train/subject_train.txt", header = F)
 train.acti <- read.table("./data/raw/train/y_train.txt", header = F)
 train.data <- read.table("./data/raw/train/X_train.txt", header = F)
 df.train <- cbind(train.sub, train.acti, train.data)
-rm(train.sub) ; rm(train.acti); rm(train.data) # clean up memory
+#rm(train.sub) ; rm(train.acti); rm(train.data) # clean up memory
 
-test.sub <- read.table("./data//raw/test//subject_test.txt", header = F)
+test.sub <- read.table("./data/raw/test/subject_test.txt", header = F)
 test.acti <- read.table("./data/raw/test/y_test.txt", header = F)
 test.data <- read.table("./data/raw/test/X_test.txt", header = F)
 df.test <- cbind(test.sub, test.acti, test.data)
@@ -35,13 +35,15 @@ df.total <- rbind(df.test, df.train)
 var1 <- c("subject", "activity.n")
 var2 <- read.table("./data/raw/features.txt", header = F)
 var <- c(var1, as.character(var2[, 2]))
-rm(var1)
+rm(var1) ; rm(var2)
 
 names(df.total) <- var
-dt.total <- data.table(df.total, key = activity.n))
+dt.total <- data.table(df.total)
+setkey(x = dt.total, activity.n)
 
-rm(test.sub) ; rm(test.acti); rm(test.data) # clean up memory
-rm(df.test); rm(df.total); rm(df.train)
+
+#rm(test.sub) ; rm(test.acti); rm(test.data) # clean up memory
+#rm(df.test); rm(df.total); rm(df.train)
 
 
 # STEP 2. Extracts only the measurements on the mean and standard deviation for each measurement. 
@@ -61,7 +63,7 @@ acti <- data.table(read.table(file = "./data/raw/activity_labels.txt",
 setnames(acti, c("V1", "V2"), c("activity.n", "activity"))
 setkey(acti, activity.n)
 
-dt <- dt[acti]
+dt <- dt[acti] # Joins acti and dt using their common key
 n.col <- dim(dt)[2]
 setcolorder(dt, c("subject", "activity.n", 
                   "activity", 
@@ -70,10 +72,15 @@ setcolorder(dt, c("subject", "activity.n",
 
 
 # STEP 4. Appropriately labels the data set with descriptive variable names. 
-# Already done as part of STEP 1.
 
-# STEP 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subjec
+# Already done as part of STEP 1. But let's clean up.
 
+setkey(dt, subject)
+dt[, activity.n := NULL] # Deletes this column
+
+# STEP 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject
+
+dt2 <- dt[, lapply(.SD, mean), by=list(activity, subject)]
 
 
 ##### Carré de sable
@@ -82,12 +89,12 @@ View(test.sub[1:10, ])
 View(test.acti[1:10, ])
 View(test.data[1:10, ])
 
-temp <- read.table("./data/raw/train//Inertial Signals//body_acc_x_train.txt", header = F)
+temp <- read.table("./data/raw/train/Inertial Signals/body_acc_x_train.txt", header = F)
 tempdf <- temp[1:5, ]
 View(tempdf)
 dim(temp)
 
-temp2 <- read.table("./data/raw/train//X_train.txt", header = F)
+temp2 <- read.table("./data/raw/train/X_train.txt", header = F)
 df2 <- temp2[1:5, ]
 View(df2)
 dim(temp2)
