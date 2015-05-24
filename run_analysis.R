@@ -90,3 +90,5 @@ dt[, activity.n := NULL] # Deletes this column
 # STEP 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject
 
 dt2 <- dt[, lapply(.SD, mean), by=list(activity, subject)]
+write.table(dt2, file = "tidy.txt", row.name=FALSE, sep=",")
+
